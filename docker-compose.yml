@@ -1,0 +1,26 @@
+services:
+  web:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    command: ["sh", "-c", "./wait-for-it.sh uway_database:5432 -- ./start.sh"]
+    volumes:
+        - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - uway_database
+
+  uway_database:
+    image: postgis/postgis
+    restart: always
+    volumes:
+      - uway_db_data:/var/lib/postgresql/data
+    environment:
+        POSTGRES_USER: ${POSTGRES_USER}
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        POSTGRES_DB: ${POSTGRES_DB}
+
+volumes:
+  uway_db_data:
