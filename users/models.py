@@ -42,7 +42,7 @@ class PassengerType(models.Model):
 
 class User(AbstractUser):
     user_id = models.AutoField(primary_key=True)
-    college = models.ForeignKey(College, on_delete=models.CASCADE)
+    college = models.ForeignKey(College, on_delete=models.CASCADE, null=True, blank=True)
     user_type = models.ForeignKey(UserType, on_delete=models.SET_NULL, null=True)
     passenger_type = models.ForeignKey(PassengerType, on_delete=models.SET_NULL, null=True)
     username = models.CharField(max_length=50, unique=True)
@@ -51,5 +51,8 @@ class User(AbstractUser):
     phone = models.CharField(max_length=30)
     code = models.CharField(max_length=15)
 
+    @property
+    def id(self):
+        return self.user_id
     class Meta:
         db_table = 'user'
