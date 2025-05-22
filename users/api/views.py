@@ -19,6 +19,13 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        user = User.objects.get(username=request.data['username'])
+        user_data = UserSerializer(user).data
+        response.data['user'] = user_data
+        return response
+
 class UserApiViewSet(ModelViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.all()
