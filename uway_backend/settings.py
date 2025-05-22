@@ -41,15 +41,23 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
-    'corsheaders'
+    'corsheaders',
+    'drf_spectacular',
 ]
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
 
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Uway API',
+    'DESCRIPTION': 'API documentation for Uway application',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,  # evita mostrar el JSON en Swagger UI si no lo necesitas
+}
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
