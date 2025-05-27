@@ -6,7 +6,16 @@ from rest_framework import status
 from colleges.api.serializers import CollegeSerializer
 from colleges.models import College, Color, CollegeColor
 
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+from colleges.models import College
+from users.api.permissions import IsSystemAdmin
+from .serializers import CollegeSerializer
 
+class UnverifiedCollegeListView(generics.ListAPIView):
+    queryset = College.objects.filter(is_verified=False)
+    serializer_class = CollegeSerializer
+    permission_classes = [IsAuthenticated, IsSystemAdmin]
 class CollegeApiViewSet(ModelViewSet):
     """
     API viewset for College model.
