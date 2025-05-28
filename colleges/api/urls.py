@@ -8,5 +8,5 @@ college_router.register('colleges', CollegeApiViewSet, basename='college')
 
 urlpatterns = [
     path('', include(college_router.urls)),
-    path('unverified-colleges/', UnverifiedCollegeListView.as_view(), name='unverified-colleges'),
+    path('colleges/unverified/', UnverifiedCollegeListView.as_view(), name='unverified-colleges'),
 ]
