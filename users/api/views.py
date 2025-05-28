@@ -6,6 +6,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from users.api.serializers import UserSerializer
 from users.models import User
+from users.api.permissions import IsSystemAdmin
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod

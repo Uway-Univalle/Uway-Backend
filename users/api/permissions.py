@@ -7,3 +7,14 @@ class IsSystemAdmin(BasePermission):
             request.user.is_authenticated and
             getattr(request.user.user_type, "name", "") == "SystemAdmin"
         )
+
+class IsCollegeAdminOfOwnCollege(BasePermission):
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and
+            getattr(request.user.user_type, "name", "") == "CollegeAdmin" and
+            getattr(request.user.college, "is_verified", False)
+        )
+
+    def has_object_permission(self, request, view, obj):
+        return obj == request.user.college
