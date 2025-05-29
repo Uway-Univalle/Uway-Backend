@@ -48,11 +48,12 @@ class CollegeApiViewSet(ModelViewSet):
         """
         Create a new College instance.
         """
-        colors = request.data.pop('colors', [])
+        data = request.data.copy()
+        colors = data.pop('colors', [])
         logo_file = request.FILES.get('logo_img')
 
         with transaction.atomic():
-            serializer = self.get_serializer(data=request.data)
+            serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception=True)
             college = serializer.save()
 
@@ -75,8 +76,8 @@ class CollegeApiViewSet(ModelViewSet):
                     color = color_instance
                 )
 
-        data = self.get_serializer(college).data
-        return Response(data, status=status.HTTP_201_CREATED)
+        response = self.get_serializer(college).data
+        return Response(response, status=status.HTTP_201_CREATED)
 
 
 @api_view(["POST"])
