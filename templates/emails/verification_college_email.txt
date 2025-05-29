@@ -1,0 +1,12 @@
+Hola,
+
+Tu institución "{{ college_name }}" ha sido verificada exitosamente en Uway.
+
+Aquí están tus credenciales de acceso como administrador institucional:
+
+Usuario: {{ username }}
+Contraseña: {{ password }}
+
+Puedes iniciar sesión en la plataforma. Te recomendamos cambiar tu contraseña en el primer acceso.
+
+Gracias por usar Uway.

@@ -1,6 +1,8 @@
+import threading
 import uuid
 
 from django.db import transaction
+from django.utils.crypto import get_random_string
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import status
@@ -12,7 +14,11 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from colleges.models import College
 from core.aws.helpers import upload_file_to_s3
+from emails.helpers import send_admin_credentials_email
 from users.api.permissions import IsSystemAdmin
+from users.api.serializers import UserSerializer
+from users.models import UserType, User
+from rest_framework.decorators import api_view, permission_classes
 from .serializers import CollegeSerializer
 
 
@@ -42,11 +48,12 @@ class CollegeApiViewSet(ModelViewSet):
         """
         Create a new College instance.
         """
-        colors = request.data.pop('colors', [])
+        data = request.data.copy()
+        colors = data.pop('colors', [])
         logo_file = request.FILES.get('logo_img')
 
         with transaction.atomic():
-            serializer = self.get_serializer(data=request.data)
+            serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception=True)
             college = serializer.save()
 
@@ -69,5 +76,49 @@ class CollegeApiViewSet(ModelViewSet):
                     color = color_instance
                 )
 
-        data = self.get_serializer(college).data
-        return Response(data, status=status.HTTP_201_CREATED)
+        response = self.get_serializer(college).data
+        return Response(response, status=status.HTTP_201_CREATED)
+
+
+@api_view(["POST"])
+@permission_classes([IsSystemAdmin])
+def verify_college(request, college_id):
+    """
+    Endpoint to verify a college once the System Admin has reviewed
+    the essential information of the college.
+
+    The verification process includes setting the college is_verified
+    attribute to True as well as creating a new user with the
+    CollegeAdmin User Type and sending the user credentials via email.
+    """
+    try:
+        college = College.objects.get(pk=college_id)
+    except College.DoesNotExist:
+        return Response({'error': 'La institución no existe'}, status=status.HTTP_404_NOT_FOUND)
+
+    if college.is_verified:
+        return Response({'detail': 'La institución ya está verificada'}, status=status.HTTP_400_BAD_REQUEST)
+
+    with transaction.atomic():
+        college.is_verified = True
+        college.save()
+        username = f"admin_{uuid.uuid4().hex[:10]}"
+        user_type = UserType.objects.get(name="CollegeAdmin")
+        email = college.email
+        password = get_random_string(20)
+
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            user_type=user_type,
+            college=college
+        )
+        serializer = UserSerializer(user)
+
+    thread = threading.Thread(
+        target=send_admin_credentials_email, args=(username, password, college.name, college.email)
+    )
+    thread.start()
+
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
