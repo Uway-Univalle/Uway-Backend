@@ -1,3 +1,4 @@
+import threading
 import uuid
 
 from django.db import transaction
@@ -13,6 +14,7 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from colleges.models import College
 from core.aws.helpers import upload_file_to_s3
+from emails.helpers import send_admin_credentials_email
 from users.api.permissions import IsSystemAdmin
 from users.api.serializers import UserSerializer
 from users.models import UserType, User
@@ -76,21 +78,31 @@ class CollegeApiViewSet(ModelViewSet):
         data = self.get_serializer(college).data
         return Response(data, status=status.HTTP_201_CREATED)
 
+
 @api_view(["POST"])
 @permission_classes([IsSystemAdmin])
 def verify_college(request, college_id):
-    if not college_id:
-        return Response({'error': 'college_id es requerido'}, status=status.HTTP_400_BAD_REQUEST)
+    """
+    Endpoint to verify a college once the System Admin has reviewed
+    the essential information of the college.
+
+    The verification process includes setting the college is_verified
+    attribute to True as well as creating a new user with the
+    CollegeAdmin User Type and sending the user credentials via email.
+    """
     try:
         college = College.objects.get(pk=college_id)
     except College.DoesNotExist:
         return Response({'error': 'La institución no existe'}, status=status.HTTP_404_NOT_FOUND)
 
+    if college.is_verified:
+        return Response({'detail': 'La institución ya está verificada'}, status=status.HTTP_400_BAD_REQUEST)
+
     with transaction.atomic():
         college.is_verified = True
         college.save()
+        username = f"admin_{uuid.uuid4().hex[:10]}"
         user_type = UserType.objects.get(name="CollegeAdmin")
-        username = f"admin_{college.college_id}"
         email = college.email
         password = get_random_string(20)
 
@@ -102,4 +114,10 @@ def verify_college(request, college_id):
             college=college
         )
         serializer = UserSerializer(user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    thread = threading.Thread(
+        target=send_admin_credentials_email, args=(username, password, college.name, college.email)
+    )
+    thread.start()
+
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
