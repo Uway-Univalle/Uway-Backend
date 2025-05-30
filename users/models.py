@@ -33,3 +33,11 @@ class User(AbstractUser):
 
     class Meta:
         db_table = 'user'
+
+
+class UserDocument(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=False)
+    url = models.CharField(max_length=255)
+
+    class Meta:
+        db_table: 'user_document'
