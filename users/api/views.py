@@ -1,3 +1,4 @@
+import threading
 import uuid
 
 from django.db import transaction
@@ -12,6 +13,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from colleges.models import College
 from core.aws.helpers import upload_file_to_s3
+from emails.helpers import send_verification_notification_to_user
 from users.api.serializers import UserSerializer, UserDocumentSerializer
 from users.models import User, UserDocument
 from users.api.permissions import IsSystemAdmin, IsCollegeAdminOfOwnCollege
@@ -68,6 +70,30 @@ def unverified_users_by_college(request):
     users = User.objects.filter(college=college_id, is_verified=False)
     serializer = UserSerializer(users, many=True)
     return Response(serializer.data)
+
+
+@api_view(['PATCH'])
+@permission_classes([IsCollegeAdminOfOwnCollege])
+def verify_college_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+
+    if request.user.college != user.college:
+        return Response(
+            {'data': 'No tiene permisos para acceder a este recurso.'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    user.is_verified = True
+    user.save()
+
+    thread = threading.Thread(
+        target=send_verification_notification_to_user,
+        args=(f"{user.first_name} {user.last_name}", user.email)
+    )
+    thread.start()
+
+    return Response(status=status.HTTP_200_OK)
+
 
 @api_view(["GET"])
 def get_user_documents(request, user_id):
