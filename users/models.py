@@ -29,6 +29,7 @@ class User(AbstractUser):
     address = models.CharField(max_length=150)
     phone = models.CharField(max_length=30)
     code = models.CharField(max_length=15)
+    is_verified = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'user'

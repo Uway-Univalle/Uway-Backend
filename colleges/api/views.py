@@ -112,7 +112,8 @@ def verify_college(request, college_id):
             email=email,
             password=password,
             user_type=user_type,
-            college=college
+            college=college,
+            is_verified=True
         )
         serializer = UserSerializer(user)
 
