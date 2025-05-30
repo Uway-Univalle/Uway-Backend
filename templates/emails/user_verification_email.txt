@@ -1,0 +1,11 @@
+Hola {{ full_name }},
+
+¡Bienvenido a Uway! Nos complace informarte que tu cuenta ha sido verificada y ahora puedes acceder a la plataforma para disfrutar de nuestros servicios de movilidad.
+
+Recuerda cambiar tu contraseña al iniciar sesión por primera vez.
+
+Recomendaciones:
+- Verifica tu información personal en tu perfil.
+- Si eres conductor, asegúrate de registrar tu(s) vehículo(s).
+
+¡Gracias por hacer parte de Uway!
