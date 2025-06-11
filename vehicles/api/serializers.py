@@ -12,5 +12,6 @@ class VehicleSerializer(serializers.ModelSerializer):
             'brand',
             'tecnicomecanica_date',
             'soat_date',
-            'plate'
+            'plate',
+            'user_id'
         ]
