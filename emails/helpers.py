@@ -33,3 +33,18 @@ def send_verification_notification_to_user(full_name, email_to):
         recipient_list=[email_to],
         fail_silently=False
     )
+
+def send_verification_notification_to_vehicle_user(full_name, email_to,plate):
+    context = {
+        "full_name": full_name,
+        "plate": plate
+    }
+    message = render_to_string("emails/vehicle_user_verification_email.txt", context)
+
+    send_mail(
+        subject="¡Tu vehículo ha sido verificado!",
+        message=message,
+        from_email=os.environ.get("EMAIL_HOST_USER"),
+        recipient_list=[email_to],
+        fail_silently=False
+    )

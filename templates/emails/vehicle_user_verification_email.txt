@@ -1,0 +1,6 @@
+Hola {{ full_name }},
+
+EL vehículo con placa {{ plate }} ha sido verificado exitosamente.
+
+Saludos,
+El equipo de Uway

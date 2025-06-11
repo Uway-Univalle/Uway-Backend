@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 class VehicleType(models.Model):
     name = models.CharField(max_length=20)
@@ -26,6 +27,7 @@ class Vehicle(models.Model):
     vehicle_type = models.ForeignKey(VehicleType, on_delete=models.SET_NULL, null=True)
     vehicle_category = models.ForeignKey(VehicleCategory, on_delete=models.SET_NULL, null=True)
     vehicle_location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True)
+    user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='user')
     state = models.CharField(max_length=20)
     brand = models.CharField(max_length=30)
     tecnicomecanica_date = models.DateField()
