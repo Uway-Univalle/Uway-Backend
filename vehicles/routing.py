@@ -1,6 +1,6 @@
-from django.urls import re_path
+from django.urls import re_path, path
 from . import consumers
 
 websocket_urlpatterns = [
-    re_path(r'ws/vehicles/(?P<vehicle_id>\d+)/$', consumers.VehicleLocationConsumer.as_asgi()),
+    path("ws/vehicle-tracking/", consumers.VehicleLocationConsumer.as_asgi())
 ]
