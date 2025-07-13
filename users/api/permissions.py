@@ -18,3 +18,10 @@ class IsCollegeAdminOfOwnCollege(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return obj == request.user.college
+
+class IsDriver(BasePermission):
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and
+            getattr(request.user.user_type, "name", "") == "Driver"
+        )
