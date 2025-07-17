@@ -27,8 +27,13 @@ class Vehicle(models.Model):
     vehicle_type = models.ForeignKey(VehicleType, on_delete=models.SET_NULL, null=True)
     vehicle_category = models.ForeignKey(VehicleCategory, on_delete=models.SET_NULL, null=True)
     vehicle_location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True)
+    capacity = models.IntegerField(null=False, default=5)
     user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='user')
-    state = models.CharField(max_length=20)
+    state = models.CharField(max_length=20, choices=[
+        ('AVAILABLE', 'Available'),
+        ('MAINTENANCE', 'Maintenance'),
+        ('IN_USE', 'In Use')
+    ])
     brand = models.CharField(max_length=30)
     tecnicomecanica_date = models.DateField()
     soat_date = models.DateField()
