@@ -4,20 +4,29 @@ from vehicles.api.serializers import VehicleSerializer
 from rest_framework.generics import get_object_or_404
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from users.api.permissions import IsCollegeAdminOfOwnCollege
+from users.api.permissions import IsCollegeAdminOfOwnCollege, IsDriver
 import threading
 from emails.helpers import send_verification_notification_to_vehicle_user
 
 class VehicleViewSet(viewsets.ModelViewSet):
     queryset = Vehicle.objects.all()
     serializer_class = VehicleSerializer
+    permission_classes = [IsDriver]
+
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        data['user_id'] = request.user.id
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 @api_view(["GET"])
 @permission_classes([IsCollegeAdminOfOwnCollege])
 def unverified_vehicles_by_college(request):
     vehicles = Vehicle.objects.filter(
         is_verified=False,
-        college=request.user.college
+        user_id__college=request.user.college
     )
     serializer = VehicleSerializer(vehicles, many=True)
     return Response(serializer.data)
