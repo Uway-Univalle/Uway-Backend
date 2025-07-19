@@ -25,3 +25,10 @@ class IsDriver(BasePermission):
             request.user.is_authenticated and
             getattr(request.user.user_type, "name", "") == "Driver"
         )
+
+class IsPassenger(BasePermission):
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and
+            getattr(request.user.user_type, "name", "") == "Passenger"
+        )
