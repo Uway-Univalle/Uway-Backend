@@ -7,12 +7,20 @@ from users.models import User, UserDocument
 
 
 class UserSerializer(serializers.ModelSerializer):
+    attachments = serializers.ListField(
+        child=serializers.FileField(
+            allow_empty_file=False, allow_null=False, required=False
+        ),
+        write_only=True,
+        required=False
+    )
+
     class Meta:
         model = User
         fields = [
             'id', 'username', 'email', 'personal_id', 'address', 'phone', 'code',
             'user_type', 'passenger_type', 'college', 'is_verified', 'date_joined',
-            'last_login', 'password'
+            'last_login', 'password', 'attachments'
         ]
         extra_kwargs = {
             'password' : {'write_only' : True},
@@ -20,9 +28,6 @@ class UserSerializer(serializers.ModelSerializer):
             'last_login' : {'read_only' : True}
         }
 
-    def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
-        return user
 
 
 class UserDocumentSerializer(serializers.ModelSerializer):

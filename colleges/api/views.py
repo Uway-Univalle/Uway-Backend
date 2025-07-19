@@ -3,11 +3,12 @@ import uuid
 
 from django.db import transaction
 from django.utils.crypto import get_random_string
+from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import status
 
-from colleges.api.serializers import CollegeSerializer
+from colleges.api.serializers import CollegeSerializer, CollegeCreateSerializer
 from colleges.models import College, Color, CollegeColor
 
 from rest_framework import generics
@@ -44,6 +45,7 @@ class CollegeApiViewSet(ModelViewSet):
             return []
         return [IsAuthenticated()]
 
+    @extend_schema(request=CollegeCreateSerializer, responses=CollegeSerializer)
     def create(self, request, *args, **kwargs):
         """
         Create a new College instance.

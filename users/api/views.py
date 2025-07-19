@@ -2,7 +2,6 @@ import threading
 import uuid
 
 from django.db import transaction
-from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -11,11 +10,10 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from colleges.models import College
 from core.aws.helpers import upload_file_to_s3
 from emails.helpers import send_verification_notification_to_user
 from users.api.serializers import UserSerializer, UserDocumentSerializer
-from users.models import User, UserDocument
+from users.models import User, UserDocument, UserType
 from users.api.permissions import IsSystemAdmin, IsCollegeAdminOfOwnCollege
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -43,19 +41,28 @@ class UserApiViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         files = request.FILES.getlist('attachments')
-        college_id = request.data.get('college')
-        if college_id is None:
+
+        data = request.data.copy()
+        data.pop('attachments', None)
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+
+        validated = serializer.validated_data
+
+        college = validated.get('college')
+        user_type = validated.get('user_type')
+
+        if college is None and user_type.name != 'SystemAdmin':
             return Response(
                 {'data': 'El usuario debe estar asociado a una institución.'},
                 status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            user = serializer.save()
+            user = User.objects.create_user(**validated)
 
             for file in files:
-                file_path = f"private/{college_id}-{user.college.name}/{user.id}/{str(uuid.uuid4())}_{file.name}"
+                file_path = f"private/{college.college_id}-{user.college.name}/{user.id}/{str(uuid.uuid4())}_{file.name}"
                 file_url = upload_file_to_s3(file, file_path)
                 UserDocument.objects.create(user=user, url=file_url)
 
