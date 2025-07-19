@@ -15,5 +15,6 @@ urlpatterns = [
     path("api/users/", include(router.urls)),
     path('api/', include('vehicles.api.urls')),
     path('api/', include('routes.api.urls')),
+    path('api/', include('trips.api.urls')),
     path('api/colleges/', include(college_router.urls))
 ]
