@@ -27,5 +27,29 @@ services:
     ports:
       - "6379:6379"
 
+  celery:
+    build:
+      context: .
+    command: celery -A uway_backend worker --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - web
+      - redis
+
+  celery_beat:
+    build:
+      context: .
+    command: celery -A uway_backend beat --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - celery
+      - redis
+
 volumes:
   uway_db_data:
