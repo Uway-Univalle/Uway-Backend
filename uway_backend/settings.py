@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-8i9+wo-@(@p9u%e5g*s7j=ze(@rdyurm^z0!2+k%u=*%$7aw7e'
+SECRET_KEY = os.environ.get("SECRET_KEY", 'django-insecure-8i9+wo-@(@p9u%e5g*s7j=ze(@rdyurm^z0!2+k%u=*%$7aw7e')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'colleges.apps.CollegesConfig',
     'vehicles.apps.VehiclesConfig',
     'routes.apps.RoutesConfig',
+    'trips.apps.TripsConfig',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
@@ -65,6 +66,18 @@ CHANNEL_LAYERS = {
     },
 }
 
+REDIS_URL = os.getenv("REDIS_URL", 'redis://redis:6379/0')
+
+CELERY_BROKER_URL = os.getenv("REDIS_URL", 'redis://redis:6379/0')
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+
+CELERY_BEAT_SCHEDULE = {
+  "flush-locations-every-30s": {
+    "task": "vehicles.tasks.flush_locations_to_db",
+    "schedule": 30.0,
+  },
+}
+
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -76,7 +89,7 @@ SPECTACULAR_SETTINGS = {
     'TITLE': 'Uway API',
     'DESCRIPTION': 'API documentation for Uway application',
     'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,  # evita mostrar el JSON en Swagger UI si no lo necesitas
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 SIMPLE_JWT = {
