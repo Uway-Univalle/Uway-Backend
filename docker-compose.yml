@@ -15,6 +15,7 @@ services:
 
   uway_database:
     image: postgis/postgis
+    platform: linux/amd64
     restart: always
     volumes:
       - uway_db_data:/var/lib/postgresql/data
@@ -24,6 +25,7 @@ services:
         POSTGRES_DB: ${POSTGRES_DB}
   redis:
     image: redis:alpine
+    platform: linux/amd64
     ports:
       - "6379:6379"
 
