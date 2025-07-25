@@ -135,3 +135,22 @@ def get_passenger_types(request):
     passenger_types = PassengerType.objects.all()
     serializer = UserTypeSerializer(passenger_types, many=True)
     return Response(serializer.data)
+
+@api_view(["PATCH"])
+@permission_classes([IsCollegeAdminOfOwnCollege])
+def deny_driver_verification(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    reason_denied = request.data.get('reason_denied', '')
+
+    user.denied = True
+    user.reason_denied = reason_denied
+    user.save()
+
+    # Enviar correo de notificación
+    send_denied_notification_to_user(
+        f"{user.first_name} {user.last_name}",
+        user.email,
+        reason_denied
+    )
+
+    return Response(status=status.HTTP_200_OK)

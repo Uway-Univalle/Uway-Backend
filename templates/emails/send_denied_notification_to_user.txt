@@ -1,0 +1,9 @@
+Hola {{ first_name }}, {{ last_name }}!
+
+Hemos revisado tu solicitud para ser conductor, pero fue rechazada.
+
+Motivo: {{ reason_denied }}
+
+Si quieres volver a aplicar a Uway como conductor debes realizar otra vez la subida de los archivos.
+
+Equipo Administrativo de Uway.
