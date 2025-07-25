@@ -9,4 +9,4 @@ class VehicleSerializer(serializers.ModelSerializer):
 class VehicleTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = VehicleType
-        fields = ['name', 'description']
+        fields = ['id','name', 'description']
