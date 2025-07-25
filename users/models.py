@@ -5,7 +5,6 @@ from colleges.models import College
 
 
 class UserType(models.Model):
-    user_type_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
     description = models.TextField()
 
@@ -13,7 +12,6 @@ class UserType(models.Model):
         db_table = 'user_type'
 
 class PassengerType(models.Model):
-    passenger_type_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
     description = models.TextField()
 
