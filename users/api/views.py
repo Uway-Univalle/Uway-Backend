@@ -142,6 +142,11 @@ def deny_driver_verification(request, user_id):
     user = get_object_or_404(User, id=user_id)
     reason_denied = request.data.get('reason_denied', '')
 
+    # Eliminar documentos del usuario de S3 y de la base de datos
+    for doc in user.documents.all():
+        delete_file_from_s3(doc.url)
+        doc.delete()
+
     user.denied = True
     user.reason_denied = reason_denied
     user.save()
