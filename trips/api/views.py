@@ -7,15 +7,19 @@ import json
 import qrcode
 from django.conf import settings
 from django.http import HttpResponse
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.generics import ListAPIView, ListCreateAPIView
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from routes.models import Route
+from trips.api.filters import TripFilter
 from trips.api.serializers import TripSerializer, TripQRSerializer, QRTripValidatorSerializer
 from trips.models import Trip, PassengerTrip
 from users.api.permissions import IsDriver, IsPassenger
@@ -23,23 +27,24 @@ from vehicles.models import Vehicle
 
 from redis import Redis
 
-class TripLisCreateView(APIView):
+class TripListCreateView(ListCreateAPIView):
     """
-    View to list and create trips for the current logged driver.
+    View to list all trips and create a new trip for the current logged driver.
     """
-    permission_classes = [IsAuthenticated, IsDriver]
+    queryset = Trip.objects.all()
+    serializer_class = TripSerializer
+    filter_backends = [DjangoFilterBackend,SearchFilter,OrderingFilter]
+    filterset_class = TripFilter
+    search_fields = ['route__name']
+    ordering_fields = ['date']
+    ordering = ['date']
 
-    @extend_schema(responses=TripSerializer)
-    def get(self, request):
-        """
-        Returns all trips from the current logged driver
-        """
-        trips = Trip.objects.filter(driver=request.user).order_by('-date')
-        serializer = TripSerializer(trips, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [IsAuthenticated(), IsDriver()]
+        return [AllowAny()]
 
-    @extend_schema(request=TripSerializer, responses=TripSerializer)
-    def post(self, request):
+    def create(self, request, *args, **kwargs):
         """
         Creates a new trip for the current logged driver
         """
@@ -57,20 +62,21 @@ class TripLisCreateView(APIView):
             return Response({'error': 'La ruta no existe.'}, status=status.HTTP_404_NOT_FOUND)
 
         # Validate that the vehicle exists
-        if not Vehicle.objects.filter(id=vehicle_id, user_id = request.user).exists():
+        if not Vehicle.objects.filter(id=vehicle_id, user_id=request.user).exists():
             return Response({'error': 'El vehículo no existe.'}, status=status.HTTP_404_NOT_FOUND)
 
         now = datetime.datetime.now(datetime.timezone.utc)
 
         # Validate that the trip date is not in the past
         if not trip_date or trip_date < now:
-            return Response({'error': 'La fecha del viaje no puede ser en el pasado.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'La fecha del viaje no puede ser en el pasado.'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         new_trip = Trip.objects.create(
-            route_id = route_id,
-            driver = request.user,
-            vehicle_id = vehicle_id,
-            date = trip_date
+            route_id=route_id,
+            driver=request.user,
+            vehicle_id=vehicle_id,
+            date=trip_date
         )
 
         serializer = TripSerializer(new_trip)
