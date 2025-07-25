@@ -41,6 +41,6 @@ class Vehicle(models.Model):
     soat_date = models.DateField()
     is_verified = models.BooleanField(default=False)
     plate = models.CharField(max_length=7, unique=True)
-
+    user_validator = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='vehicle_validator')
     class Meta:
         db_table = 'vehicle'

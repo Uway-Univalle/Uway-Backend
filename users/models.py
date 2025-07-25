@@ -30,7 +30,9 @@ class User(AbstractUser):
     phone = models.CharField(max_length=30)
     code = models.CharField(max_length=15, null=True, blank=True)
     is_verified = models.BooleanField(default=False)
-
+    first_name = models.CharField(max_length=50, blank=True)
+    last_name = models.CharField(max_length=50, blank=True)
+    user_validator = models.ForeignKey( 'self', on_delete=models.SET_NULL, null=True, blank=True, related_name='validator')
     class Meta:
         db_table = 'user'
 

@@ -12,9 +12,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from core.aws.helpers import upload_file_to_s3
 from emails.helpers import send_verification_notification_to_user
-from users.api.serializers import UserSerializer, UserDocumentSerializer
-from users.models import User, UserDocument, UserType
+from users.api.serializers import UserSerializer, UserDocumentSerializer, UserTypeSerializer
+from users.models import User, UserDocument, UserType, PassengerType
 from users.api.permissions import IsSystemAdmin, IsCollegeAdminOfOwnCollege
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
@@ -91,6 +92,7 @@ def verify_college_user(request, user_id):
         )
 
     user.is_verified = True
+    user.passanger_validator = request.user
     user.save()
 
     thread = threading.Thread(
@@ -121,3 +123,15 @@ def getRoutes(request):
     ]
 
     return Response(routes)
+
+@api_view(["GET"])
+def get_user_types(request):
+    user_types = UserType.objects.all()
+    serializer = UserTypeSerializer(user_types, many=True)
+    return Response(serializer.data)
+
+@api_view(["GET"])
+def get_passenger_types(request):
+    passenger_types = PassengerType.objects.all()
+    serializer = UserTypeSerializer(passenger_types, many=True)
+    return Response(serializer.data)
