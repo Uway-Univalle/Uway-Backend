@@ -1,6 +1,6 @@
 from rest_framework import viewsets, status
-from vehicles.models import Vehicle
-from vehicles.api.serializers import VehicleSerializer
+from vehicles.models import Vehicle, VehicleType, VehicleCategory
+from vehicles.api.serializers import VehicleSerializer, VehicleTypeSerializer
 from rest_framework.generics import get_object_or_404
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -43,6 +43,7 @@ def verify_college_vehicle(request, vehicle_id):
         )
 
     vehicle.is_verified = True
+    vehicle.vehicle_validator = request.user
     vehicle.save()
 
     thread = threading.Thread(
@@ -52,3 +53,17 @@ def verify_college_vehicle(request, vehicle_id):
     thread.start()
 
     return Response(status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+@permission_classes([IsDriver])
+def get_vehicle_types(request):
+    vehicle_types = VehicleType.objects.all()
+    serializer = VehicleTypeSerializer(vehicle_types, many=True)
+    return Response(serializer.data)
+
+@api_view(["GET"])
+@permission_classes([IsDriver])
+def get_vehicle_categories(request):
+    categories = VehicleCategory.objects.all()
+    serializer = VehicleTypeSerializer(categories, many=True)
+    return Response(serializer.data)

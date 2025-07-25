@@ -3,7 +3,7 @@ import os
 from rest_framework import serializers
 
 from core.aws.helpers import create_presigned_url
-from users.models import User, UserDocument
+from users.models import User, UserDocument, UserType
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -18,7 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'username', 'email', 'personal_id', 'address', 'phone', 'code',
+            'id','first_name', 'last_name', 'username', 'email', 'personal_id', 'address', 'phone', 'code',
             'user_type', 'passenger_type', 'college', 'is_verified', 'date_joined',
             'last_login', 'password', 'attachments'
         ]
@@ -40,3 +40,8 @@ class UserDocumentSerializer(serializers.ModelSerializer):
     def get_presigned_url(self, obj):
         key = obj.url.replace(f"https://{os.environ.get('AWS_STORAGE_BUCKET_NAME')}.s3.amazonaws.com/", "")
         return create_presigned_url(key)
+
+class UserTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserType
+        fields = ['name', 'description']
