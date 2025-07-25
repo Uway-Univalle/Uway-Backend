@@ -10,8 +10,8 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from core.aws.helpers import upload_file_to_s3
-from emails.helpers import send_verification_notification_to_user
+from core.aws.helpers import upload_file_to_s3, delete_file_from_s3
+from emails.helpers import send_verification_notification_to_user, send_denied_notification_to_user
 from users.api.serializers import UserSerializer, UserDocumentSerializer, UserTypeSerializer
 from users.models import User, UserDocument, UserType, PassengerType
 from users.api.permissions import IsSystemAdmin, IsCollegeAdminOfOwnCollege

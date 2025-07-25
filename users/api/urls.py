@@ -15,5 +15,6 @@ urlpatterns = [
     path('user_documents/<user_id>/', get_user_documents, name='get_user_documents'),
     path('users/<user_id>/verify/', verify_college_user, name='verify_college_user'),
     path('users/get_user_types/', get_user_types, name='get_user_types'),
-    path('users/get_passanger_types/', get_passenger_types, name='get_passanger_types')
+    path('users/get_passanger_types/', get_passenger_types, name='get_passanger_types'),
+    path('users//documents/', get_user_documents, name='get_user_documents'),
 ]
