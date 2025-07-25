@@ -140,11 +140,12 @@ def get_passenger_types(request):
 @permission_classes([IsCollegeAdminOfOwnCollege])
 def deny_driver_verification(request, user_id):
     user = get_object_or_404(User, id=user_id)
+    user_documents = UserDocument.objects.filter(user=user)
     reason_denied = request.data.get('reason_denied', '')
 
     # Eliminar documentos del usuario de S3 y de la base de datos
-    for doc in user.documents.all():
-        delete_file_from_s3(doc.url)
+    for doc in user_documents:
+        delete_file_from_s3(doc.url.split('https://uway.s3.amazonaws.com/')[1])
         doc.delete()
 
     user.denied = True

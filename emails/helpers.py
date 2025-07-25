@@ -53,7 +53,7 @@ def send_denied_notification_to_user(full_name, email_to, reason):
         "full_name": full_name,
         "reason": reason
     }
-    message = render_to_string("emails/user_denied_email.txt", context)
+    message = render_to_string("emails/send_denied_notification_to_user.txt", context)
 
     send_mail(
         subject="Tu solicitud para ser conductor ha sido rechazada",
