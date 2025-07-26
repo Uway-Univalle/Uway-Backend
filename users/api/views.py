@@ -1,6 +1,6 @@
 import threading
 import uuid
-
+from drf_spectacular.utils import extend_schema
 from django.db import transaction
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
@@ -12,7 +12,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from core.aws.helpers import upload_file_to_s3, delete_file_from_s3
 from emails.helpers import send_verification_notification_to_user, send_denied_notification_to_user
-from users.api.serializers import UserSerializer, UserDocumentSerializer, UserTypeSerializer
+from users.api.serializers import UserSerializer, UserDocumentSerializer, UserTypeSerializer, DenyDriverVerificationSerializer
 from users.models import User, UserDocument, UserType, PassengerType
 from users.api.permissions import IsSystemAdmin, IsCollegeAdminOfOwnCollege
 
@@ -136,12 +136,16 @@ def get_passenger_types(request):
     serializer = UserTypeSerializer(passenger_types, many=True)
     return Response(serializer.data)
 
+@extend_schema(request=DenyDriverVerificationSerializer)
 @api_view(["PATCH"])
 @permission_classes([IsCollegeAdminOfOwnCollege])
 def deny_driver_verification(request, user_id):
+    serializer = DenyDriverVerificationSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    reason_denied = serializer.validated_data['reason_denied']
+
     user = get_object_or_404(User, id=user_id)
     user_documents = UserDocument.objects.filter(user=user)
-    reason_denied = request.data.get('reason_denied', '')
 
     # Eliminar documentos del usuario de S3 y de la base de datos
     for doc in user_documents:
