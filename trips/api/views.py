@@ -24,7 +24,7 @@ from trips.api.serializers import TripSerializer, TripQRSerializer, QRTripValida
 from trips.models import Trip, PassengerTrip
 from users.api.permissions import IsDriver, IsPassenger
 from vehicles.models import Vehicle
-
+from trips.tasks import analyze_trip
 from redis import Redis
 
 class TripListCreateView(ListCreateAPIView):
@@ -164,6 +164,8 @@ def finish_trip(request, trip_id):
     # Remove the trip from Redis set of active rides
     redis = Redis.from_url(settings.REDIS_URL, decode_responses= True)
     redis.srem('active_rides', str(trip_id))
+
+    analyze_trip.delay(trip_id)  # Trigger the analysis of the trip in the background
 
     serializer = TripSerializer(trip)
     return Response(serializer.data, status=status.HTTP_200_OK)
