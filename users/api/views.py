@@ -153,10 +153,10 @@ def deny_driver_verification(request, user_id):
     user.save()
 
     # Enviar correo de notificación
-    send_denied_notification_to_user(
-        f"{user.first_name} {user.last_name}",
-        user.email,
-        reason_denied
+    thread = threading.Thread(
+        target=send_denied_notification_to_user,
+        args=(f"{user.first_name} {user.last_name}", user.email, reason_denied)
     )
+    thread.start()
 
     return Response(status=status.HTTP_200_OK)
