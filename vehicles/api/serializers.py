@@ -10,3 +10,8 @@ class VehicleTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = VehicleType
         fields = ['id','name', 'description']
+
+class DenyVehicleVerificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vehicle
+        fields = ['id', 'reason_denied']
