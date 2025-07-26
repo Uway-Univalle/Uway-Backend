@@ -20,6 +20,7 @@ class VehicleCategory(models.Model):
 
 class VehicleLocation(models.Model):
     trip = models.ForeignKey('trips.Trip', on_delete=models.SET_NULL, null=True, related_name='vehicle_locations')
+    vehicle = models.ForeignKey('Vehicle', on_delete=models.SET_NULL, null=True, related_name='vehicle_locations')
     position = gis_models.PointField(srid=4326, geography=True)
     date = models.DateTimeField()
 
