@@ -42,5 +42,7 @@ class Vehicle(models.Model):
     is_verified = models.BooleanField(default=False)
     plate = models.CharField(max_length=7, unique=True)
     user_validator = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='vehicle_validator')
+    reason_denied = models.TextField(null=True, blank=True)
+    denied = models.BooleanField(default=False)
     class Meta:
         db_table = 'vehicle'

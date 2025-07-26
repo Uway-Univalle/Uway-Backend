@@ -31,6 +31,8 @@ class User(AbstractUser):
     first_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50, blank=True)
     user_validator = models.ForeignKey( 'self', on_delete=models.SET_NULL, null=True, blank=True, related_name='validator')
+    reason_denied = models.TextField(null=True, blank=True)
+    denied = models.BooleanField(default=False)
     class Meta:
         db_table = 'user'
 

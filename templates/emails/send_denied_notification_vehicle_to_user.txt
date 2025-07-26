@@ -1,0 +1,9 @@
+Hola {{ full_name }},
+
+Hemos revisado tu solicitud del vehiculo con placa {{plate}}, pero fue rechazada.
+
+Motivo: {{reason}}
+
+Si quieres volver a verificar tu vehiculo frente a Uway debes realizar otra vez la actualizacion de datos.
+
+Equipo Administrativo de Uway.

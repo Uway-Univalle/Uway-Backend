@@ -45,3 +45,8 @@ class UserTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserType
         fields = ['id','name', 'description']
+
+class DenyDriverVerificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'reason_denied']

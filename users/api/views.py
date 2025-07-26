@@ -1,6 +1,6 @@
 import threading
 import uuid
-
+from drf_spectacular.utils import extend_schema
 from django.db import transaction
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
@@ -10,9 +10,9 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from core.aws.helpers import upload_file_to_s3
-from emails.helpers import send_verification_notification_to_user
-from users.api.serializers import UserSerializer, UserDocumentSerializer, UserTypeSerializer
+from core.aws.helpers import upload_file_to_s3, delete_file_from_s3
+from emails.helpers import send_verification_notification_to_user, send_denied_notification_to_user
+from users.api.serializers import UserSerializer, UserDocumentSerializer, UserTypeSerializer, DenyDriverVerificationSerializer
 from users.models import User, UserDocument, UserType, PassengerType
 from users.api.permissions import IsSystemAdmin, IsCollegeAdminOfOwnCollege
 
@@ -135,3 +135,32 @@ def get_passenger_types(request):
     passenger_types = PassengerType.objects.all()
     serializer = UserTypeSerializer(passenger_types, many=True)
     return Response(serializer.data)
+
+@extend_schema(request=DenyDriverVerificationSerializer)
+@api_view(["PATCH"])
+@permission_classes([IsCollegeAdminOfOwnCollege])
+def deny_driver_verification(request, user_id):
+    serializer = DenyDriverVerificationSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    reason_denied = serializer.validated_data['reason_denied']
+
+    user = get_object_or_404(User, id=user_id)
+    user_documents = UserDocument.objects.filter(user=user)
+
+    # Eliminar documentos del usuario de S3 y de la base de datos
+    for doc in user_documents:
+        delete_file_from_s3(doc.url.split('https://uway.s3.amazonaws.com/')[1])
+        doc.delete()
+
+    user.denied = True
+    user.reason_denied = reason_denied
+    user.save()
+
+    # Enviar correo de notificación
+    thread = threading.Thread(
+        target=send_denied_notification_to_user,
+        args=(f"{user.first_name} {user.last_name}", user.email, reason_denied)
+    )
+    thread.start()
+
+    return Response(status=status.HTTP_200_OK)

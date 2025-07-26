@@ -1,12 +1,13 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets, status
 from vehicles.models import Vehicle, VehicleType, VehicleCategory
-from vehicles.api.serializers import VehicleSerializer, VehicleTypeSerializer
+from vehicles.api.serializers import VehicleSerializer, VehicleTypeSerializer, DenyVehicleVerificationSerializer
 from rest_framework.generics import get_object_or_404
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from users.api.permissions import IsCollegeAdminOfOwnCollege, IsDriver
 import threading
-from emails.helpers import send_verification_notification_to_vehicle_user
+from emails.helpers import send_verification_notification_to_vehicle_user, send_denied_notification_to_vehicle_user
 
 class VehicleViewSet(viewsets.ModelViewSet):
     queryset = Vehicle.objects.all()
@@ -67,3 +68,24 @@ def get_vehicle_categories(request):
     categories = VehicleCategory.objects.all()
     serializer = VehicleTypeSerializer(categories, many=True)
     return Response(serializer.data)
+
+@extend_schema(request=DenyVehicleVerificationSerializer)
+@api_view(["PATCH"])
+@permission_classes([IsCollegeAdminOfOwnCollege])
+def deny_vehicle_verification(request, vehicle_id):
+    serializer = DenyVehicleVerificationSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    reason_denied = serializer.validated_data['reason_denied']
+
+    vehicle = get_object_or_404(Vehicle, id=vehicle_id)
+    vehicle.denied = True
+    vehicle.reason_denied = reason_denied
+    vehicle.save()
+
+    thread = threading.Thread(
+        target=send_denied_notification_to_vehicle_user,
+        args=(f"{vehicle.user_id.first_name} {vehicle.user_id.last_name}", vehicle.plate, vehicle.user_id.email, reason_denied)
+    )
+    thread.start()
+
+    return Response(status=status.HTTP_200_OK)

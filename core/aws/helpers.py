@@ -38,3 +38,16 @@ def create_presigned_url(key, expiration=3600):
         return None
 
     return response
+
+def delete_file_from_s3(key):
+    """
+    Elimina un archivo de Amazon S3.
+    :param key: Ruta del archivo en S3. Ej. 'folder/nested/file.ext'
+    :return: True si se elimina correctamente, False si hay error.
+    """
+    bucket_name = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+    try:
+        s3.delete_object(Bucket=bucket_name, Key=key)
+        return True
+    except ClientError:
+        return False
