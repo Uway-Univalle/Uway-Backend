@@ -31,6 +31,7 @@ def flush_locations_to_db():
             objs.append(
                 VehicleLocation(
                     trip_id = trip_id,
+                    vehicle = Trip.objects.get(id=trip_id).vehicle,
                     position = Point(d['lng'], d['lat'], srid=4326),
                     date = datetime.datetime.fromtimestamp(d['timestamp'], tz=datetime.UTC)
                 )
