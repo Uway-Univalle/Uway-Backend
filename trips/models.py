@@ -28,3 +28,11 @@ class PassengerTrip(models.Model):
     class Meta:
         unique_together = ('trip', 'passenger')
         db_table = 'passenger_trip'
+
+class TripReport(models.Model):
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE)
+    incidents = models.IntegerField(default=0)
+    deviations = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'trip_report'
