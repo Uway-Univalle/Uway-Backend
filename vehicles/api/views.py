@@ -14,6 +14,14 @@ class VehicleViewSet(viewsets.ModelViewSet):
     serializer_class = VehicleSerializer
     permission_classes = [IsDriver]
 
+    def list(self, request, *args, **kwargs):
+        """
+        List all vehicles for the authenticated driver.
+        """
+        queryset = self.get_queryset().filter(user_id=request.user)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user_id'] = request.user.id
