@@ -2,6 +2,7 @@ import threading
 import uuid
 
 from django.db import transaction
+
 from django.utils.crypto import get_random_string
 from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
@@ -21,7 +22,7 @@ from users.api.serializers import UserSerializer
 from users.models import UserType, User
 from rest_framework.decorators import api_view, permission_classes
 from .serializers import CollegeSerializer
-from ..reports import get_mobility_report, get_performance_report
+from ..tasks import generate_institutional_report
 
 
 class UnverifiedCollegeListView(generics.ListAPIView):
@@ -127,14 +128,18 @@ def verify_college(request, college_id):
 
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-api_view(["POST"])
+@extend_schema(request=ReportRequestSerializer)
+@api_view(["POST"])
 @permission_classes([IsAuthenticated, IsCollegeAdminOfOwnCollege])
 def generate_college_report(request, college_id):
     serializer = ReportRequestSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     start_date = serializer.validated_data['start_date']
     end_date = serializer.validated_data['end_date']
-    college = College.objects.get(pk=college_id)
 
-    mobility = get_mobility_report(college, start_date, end_date)
-    performance = get_performance_report(college, start_date, end_date)
+    generate_institutional_report.delay(college_id, start_date.isoformat(), end_date.isoformat(), request.user.email)
+
+    return Response(
+        {'detail': 'El reporte se generará y enviará por correo en breve.'},
+        status=status.HTTP_200_OK
+    )
