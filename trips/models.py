@@ -3,6 +3,7 @@ from django.db import models
 from routes.models import Route
 from users.models import User
 from vehicles.models import Vehicle
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Trip(models.Model):
@@ -36,3 +37,13 @@ class TripReport(models.Model):
 
     class Meta:
         db_table = 'trip_report'
+
+class Rate(models.Model):
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE)
+    passenger = models.ForeignKey(User, on_delete=models.CASCADE, null=True, default=None)
+    ratting = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    comment = models.TextField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('trip', 'passenger')
+        db_table = 'rate'

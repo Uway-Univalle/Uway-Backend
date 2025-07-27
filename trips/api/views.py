@@ -20,12 +20,13 @@ from rest_framework.views import APIView
 
 from routes.models import Route
 from trips.api.filters import TripFilter
-from trips.api.serializers import TripSerializer, TripQRSerializer, QRTripValidatorSerializer
+from trips.api.serializers import TripSerializer, TripQRSerializer, QRTripValidatorSerializer, TripRateSerializer
 from trips.models import Trip, PassengerTrip
 from users.api.permissions import IsDriver, IsPassenger
 from vehicles.models import Vehicle
 from trips.tasks import analyze_trip
 from redis import Redis
+from drf_spectacular.utils import extend_schema
 
 class TripListCreateView(ListCreateAPIView):
     """
@@ -294,3 +295,31 @@ def join_trip(request, trip_id):
     )
 
     return Response({'message': 'Te has unido al viaje correctamente.'}, status=status.HTTP_201_CREATED)
+
+@extend_schema(request=TripRateSerializer)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsPassenger])
+def create_passenger_rate(request, trip_id):
+    """
+    Allows a passenger to rate a trip after it has been completed.
+    It ensures:
+    - The trip exists and the status is 'COMPLETED'.
+    - The passenger is associated with the trip and has been validated.
+    """
+    try:
+        trip = Trip.objects.get(id=trip_id)
+    except Trip.DoesNotExist:
+        return Response({'error': 'El viaje no existe.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if trip.status != 'COMPLETED':
+        return Response({'error': 'El viaje no ha sido completado.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    passenger_trip = PassengerTrip.objects.filter(trip=trip, passenger=request.user, validated=True).first()
+    if not passenger_trip:
+        return Response({'error': 'No estás validado en este viaje.'}, status=status.HTTP_403_FORBIDDEN)
+
+    serializer = TripRateSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    serializer.save(trip=trip, passenger=request.user)
+
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
