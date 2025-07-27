@@ -1,14 +1,15 @@
 from django.contrib.gis.geos import LineString
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 import requests
 from rest_framework.views import APIView
-
+from rest_framework.permissions import IsAuthenticated
 from routes.api.serializers import CoordinateSerializer, SaveRouteSerializer, RouteSerializer
 from routes.models import Route
 from users.api.permissions import IsDriver
+from rest_framework.generics import get_object_or_404
 
 
 @extend_schema(request=CoordinateSerializer)
@@ -95,3 +96,17 @@ class DriverRoutesView(APIView):
         )
 
         return Response(RouteSerializer(route).data, status=status.HTTP_201_CREATED)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated, IsDriver])
+def delete_route_by_driver(request, route_id):
+    """
+        Deletes a route if the authenticated user is a driver and the owner of the route.
+        Only the driver who created the route can delete it.
+        """
+    route = get_object_or_404(Route, id=route_id)
+    # Check if the authenticated user is the owner of the route
+    if route.user != request.user:
+        return Response({'detail': 'No autorizado.'}, status=status.HTTP_403_FORBIDDEN)
+    route.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
