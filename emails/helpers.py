@@ -78,3 +78,16 @@ def send_denied_notification_to_vehicle_user(full_name, plate, email_to, reason)
         recipient_list=[email_to],
         fail_silently=False
     )
+def send_denied_notification_to_college(college_name, email_to):
+    context = {
+        "college_name": college_name,
+    }
+    message = render_to_string("emails/send_denied_notification_to_college.txt", context)
+
+    send_mail(
+        subject="Tu solicitud de registro de universidad ha sido rechazada",
+        message=message,
+        from_email=os.environ.get("EMAIL_HOST_USER"),
+        recipient_list=[email_to],
+        fail_silently=False
+    )

@@ -1,0 +1,9 @@
+Hola {{ college_name }},
+
+Hemos revisado tu solicitud para registrar una universidad, pero fue rechazada.
+
+Motivo: Hemos revisado la informacion y no cumple con los requisitos necesarios para el registro.
+
+Si quieres volver a registrar una universidad a Uway debes realizar otra vez la subida de los archivos.
+
+Equipo Administrativo de Uway.

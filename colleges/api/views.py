@@ -4,6 +4,7 @@ import uuid
 from django.db import transaction
 from django.utils.crypto import get_random_string
 from drf_spectacular.utils import extend_schema
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import status
@@ -14,12 +15,12 @@ from colleges.models import College, Color, CollegeColor
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from colleges.models import College
-from core.aws.helpers import upload_file_to_s3
-from emails.helpers import send_admin_credentials_email
+from core.aws.helpers import upload_file_to_s3, delete_file_from_s3
+from emails.helpers import send_admin_credentials_email, send_denied_notification_to_college
 from users.api.permissions import IsSystemAdmin
 from users.api.serializers import UserSerializer
 from users.models import UserType, User
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from .serializers import CollegeSerializer
 
 
@@ -43,6 +44,8 @@ class CollegeApiViewSet(ModelViewSet):
     def get_permissions(self):
         if self.action == 'create' or self.action == 'list':
             return []
+        if self.action == 'destroy':
+            return [IsAuthenticated(), IsSystemAdmin()]
         return [IsAuthenticated()]
 
     @extend_schema(request=CollegeCreateSerializer, responses=CollegeSerializer)
@@ -81,6 +84,33 @@ class CollegeApiViewSet(ModelViewSet):
         response = self.get_serializer(college).data
         return Response(response, status=status.HTTP_201_CREATED)
 
+    def destroy(self, request, *args, **kwargs):
+        """
+        Deletes a College instance, its associated documents (from S3 and database),
+        and sends a notification email.
+        """
+        college = get_object_or_404(College, pk=kwargs['pk'])
+
+        if college.logo and college.logo.startswith('https://uway.s3.amazonaws.com/'):
+            # Delete logo from S3
+            delete_file_from_s3(college.logo.split('https://uway.s3.amazonaws.com/')[1])
+
+
+        # Save data for the email before deleting the college
+        college_name = college.name
+        email_to = college.email
+
+        # Delete the college instance
+        college.delete()
+
+        # Send notification email in a separate thread
+        thread = threading.Thread(
+            target=send_denied_notification_to_college,
+            args=(college_name, email_to)
+        )
+        thread.start()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 @api_view(["POST"])
 @permission_classes([IsSystemAdmin])
