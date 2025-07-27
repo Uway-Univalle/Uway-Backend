@@ -27,4 +27,6 @@ class CollegeCreateSerializer(serializers.Serializer):
         allow_null=False
     )
 
-
+class ReportRequestSerializer(serializers.Serializer):
+    start_date = serializers.DateField(format='%d/%m/%Y', input_formats=['%d/%m/%Y'])
+    end_date = serializers.DateField(format='%d/%m/%Y', input_formats=['%d/%m/%Y'])

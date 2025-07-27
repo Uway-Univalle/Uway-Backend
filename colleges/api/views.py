@@ -2,6 +2,7 @@ import threading
 import uuid
 
 from django.db import transaction
+
 from django.utils.crypto import get_random_string
 from drf_spectacular.utils import extend_schema
 from rest_framework.generics import get_object_or_404
@@ -9,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import status
 
-from colleges.api.serializers import CollegeSerializer, CollegeCreateSerializer
+from colleges.api.serializers import CollegeSerializer, CollegeCreateSerializer, ReportRequestSerializer
 from colleges.models import College, Color, CollegeColor
 
 from rest_framework import generics
@@ -18,10 +19,14 @@ from colleges.models import College
 from core.aws.helpers import upload_file_to_s3, delete_file_from_s3
 from emails.helpers import send_admin_credentials_email, send_denied_notification_to_college
 from users.api.permissions import IsSystemAdmin
+from core.aws.helpers import upload_file_to_s3
+from emails.helpers import send_admin_credentials_email
+from users.api.permissions import IsSystemAdmin, IsCollegeAdminOfOwnCollege
 from users.api.serializers import UserSerializer
 from users.models import UserType, User
 from rest_framework.decorators import api_view, permission_classes, action
 from .serializers import CollegeSerializer
+from ..tasks import generate_institutional_report
 
 
 class UnverifiedCollegeListView(generics.ListAPIView):
@@ -155,3 +160,19 @@ def verify_college(request, college_id):
     thread.start()
 
     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+@extend_schema(request=ReportRequestSerializer)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated, IsCollegeAdminOfOwnCollege])
+def generate_college_report(request, college_id):
+    serializer = ReportRequestSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    start_date = serializer.validated_data['start_date']
+    end_date = serializer.validated_data['end_date']
+
+    generate_institutional_report.delay(college_id, start_date.isoformat(), end_date.isoformat(), request.user.email)
+
+    return Response(
+        {'detail': 'El reporte se generará y enviará por correo en breve.'},
+        status=status.HTTP_200_OK
+    )

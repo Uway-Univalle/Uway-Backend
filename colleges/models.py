@@ -24,3 +24,8 @@ class CollegeColor(models.Model):
     class Meta:
         db_table = 'college_color'
         unique_together = ('college', 'color')
+
+class CollegeReport(models.Model):
+    college = models.ForeignKey(College, on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)
+    content = models.TextField()
