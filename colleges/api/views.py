@@ -41,7 +41,7 @@ class CollegeApiViewSet(ModelViewSet):
     serializer_class = CollegeSerializer
 
     def get_permissions(self):
-        if self.action == 'create':
+        if self.action == 'create' or self.action == 'list':
             return []
         return [IsAuthenticated()]
 
