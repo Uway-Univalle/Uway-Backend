@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import status
 
-from colleges.api.serializers import CollegeSerializer, CollegeCreateSerializer
+from colleges.api.serializers import CollegeSerializer, CollegeCreateSerializer, ReportRequestSerializer
 from colleges.models import College, Color, CollegeColor
 
 from rest_framework import generics
@@ -16,11 +16,12 @@ from rest_framework.permissions import IsAuthenticated
 from colleges.models import College
 from core.aws.helpers import upload_file_to_s3
 from emails.helpers import send_admin_credentials_email
-from users.api.permissions import IsSystemAdmin
+from users.api.permissions import IsSystemAdmin, IsCollegeAdminOfOwnCollege
 from users.api.serializers import UserSerializer
 from users.models import UserType, User
 from rest_framework.decorators import api_view, permission_classes
 from .serializers import CollegeSerializer
+from ..reports import get_mobility_report, get_performance_report
 
 
 class UnverifiedCollegeListView(generics.ListAPIView):
@@ -125,3 +126,15 @@ def verify_college(request, college_id):
     thread.start()
 
     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+api_view(["POST"])
+@permission_classes([IsAuthenticated, IsCollegeAdminOfOwnCollege])
+def generate_college_report(request, college_id):
+    serializer = ReportRequestSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    start_date = serializer.validated_data['start_date']
+    end_date = serializer.validated_data['end_date']
+    college = College.objects.get(pk=college_id)
+
+    mobility = get_mobility_report(college, start_date, end_date)
+    performance = get_performance_report(college, start_date, end_date)
