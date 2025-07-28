@@ -107,8 +107,10 @@ def get_passenger_routes(request, route_id):
     :param request:
     :return: List of routes
     """
-    routes = Route.objects.filter(id=route_id)
-    return Response(RouteSerializer(routes, many=True).data, status=status.HTTP_200_OK)
+    route = Route.objects.filter(id=route_id).first()
+    return Response({
+        "coordinates": list(route.trajectory.coords),
+    }, status=status.HTTP_200_OK)
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated, IsDriver])
