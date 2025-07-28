@@ -109,6 +109,8 @@ def get_passenger_routes(request, route_id):
     """
     route = Route.objects.filter(id=route_id).first()
     return Response({
+        "id": route.id,
+        "name": route.name,
         "coordinates": list(route.trajectory.coords),
     }, status=status.HTTP_200_OK)
 
