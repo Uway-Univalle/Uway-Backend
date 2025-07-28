@@ -2,12 +2,15 @@ from django.contrib.gis.geos import LineString
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 import requests
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from routes.api.serializers import CoordinateSerializer, SaveRouteSerializer, RouteSerializer
 from routes.models import Route
+from users.api.permissions import IsDriver, IsPassenger
+
 from users.api.permissions import IsDriver
 from rest_framework.generics import get_object_or_404
 
@@ -96,6 +99,16 @@ class DriverRoutesView(APIView):
         )
 
         return Response(RouteSerializer(route).data, status=status.HTTP_201_CREATED)
+
+@api_view(['GET'])
+def get_passenger_routes(request, route_id):
+    """
+    Returns all routes that are available for passengers.
+    :param request:
+    :return: List of routes
+    """
+    routes = Route.objects.filter(id=route_id)
+    return Response(RouteSerializer(routes, many=True).data, status=status.HTTP_200_OK)
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated, IsDriver])
