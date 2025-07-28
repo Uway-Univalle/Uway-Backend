@@ -6,10 +6,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 import requests
 from rest_framework.views import APIView
-
+from rest_framework.permissions import IsAuthenticated
 from routes.api.serializers import CoordinateSerializer, SaveRouteSerializer, RouteSerializer
 from routes.models import Route
 from users.api.permissions import IsDriver, IsPassenger
+
+from users.api.permissions import IsDriver
+from rest_framework.generics import get_object_or_404
 
 
 @extend_schema(request=CoordinateSerializer)
@@ -106,3 +109,17 @@ def get_passenger_routes(request, route_id):
     """
     routes = Route.objects.filter(id=route_id)
     return Response(RouteSerializer(routes, many=True).data, status=status.HTTP_200_OK)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated, IsDriver])
+def delete_route_by_driver(request, route_id):
+    """
+        Deletes a route if the authenticated user is a driver and the owner of the route.
+        Only the driver who created the route can delete it.
+        """
+    route = get_object_or_404(Route, id=route_id)
+    # Check if the authenticated user is the owner of the route
+    if route.user != request.user:
+        return Response({'detail': 'No autorizado.'}, status=status.HTTP_403_FORBIDDEN)
+    route.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)

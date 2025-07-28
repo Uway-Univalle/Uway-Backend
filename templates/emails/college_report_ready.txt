@@ -1,0 +1,1 @@
+A continuación se encuentra el informe de la universidad {{ college_name }} desde {{ start_date }} hasta {{ end_date }}.
